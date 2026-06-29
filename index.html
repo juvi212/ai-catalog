@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Catalog — карта инструментов ИИ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b18;
+  --node:#101a32;
+  --node-hover:#16223f;
+  --text:#dfe6f7;
+  --text-dim:#8c9ac4;
+  --text-faint:#5f6d96;
+  --leaf:#a9c2ff;
+  --line:rgba(120,150,220,.30);
+  --c-llm:#5ad1ff; --c-img:#7c8bff; --c-audio:#46e0c8; --c-video:#b06bff;
+  --c-code:#5affc4; --c-agent:#ff7ad9; --c-data:#4aa8ff; --c-api:#8fa0ff; --c-learn:#ffd166;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.nebula{position:fixed;inset:0;z-index:0;pointer-events:none;background:
+  radial-gradient(60vw 50vh at 15% 15%,rgba(90,120,255,.12),transparent 60%),
+  radial-gradient(55vw 45vh at 88% 30%,rgba(180,90,255,.10),transparent 60%),
+  radial-gradient(70vw 55vh at 65% 95%,rgba(40,200,255,.07),transparent 60%)}
+
+header{position:relative;z-index:3;text-align:center;padding:40px 20px 8px}
+.logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:12px}
+.logo-dot{width:12px;height:12px;border-radius:50%;background:var(--c-llm);box-shadow:0 0 12px var(--c-llm),0 0 26px rgba(90,209,255,.5)}
+.logo-name{font-size:13px;letter-spacing:.34em;text-transform:uppercase;color:var(--text-dim);font-weight:600}
+h1{font-size:34px;font-weight:700;letter-spacing:-.02em;margin-bottom:10px;
+  background:linear-gradient(120deg,#eaf0ff,#9db4ff 55%,#7ce0ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--text-dim);font-size:15px;max-width:540px;margin:0 auto;line-height:1.6}
+.toolbar{position:relative;z-index:3;display:flex;gap:10px;max-width:640px;margin:22px auto 0;padding:0 20px;flex-wrap:wrap;align-items:center}
+.search{flex:1;min-width:200px;position:relative}
+.search span{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:16px}
+.search input{width:100%;height:44px;padding:0 16px 0 40px;border-radius:12px;background:rgba(18,26,48,.6);
+  border:1px solid rgba(120,150,220,.18);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:.2s}
+.search input::placeholder{color:var(--text-faint)}
+.search input:focus{border-color:rgba(130,165,235,.4);box-shadow:0 0 0 3px rgba(90,140,255,.12)}
+.btn{height:44px;padding:0 16px;border-radius:12px;background:rgba(18,26,48,.6);border:1px solid rgba(120,150,220,.18);
+  color:var(--text-dim);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;transition:.18s;white-space:nowrap}
+.btn:hover{background:rgba(30,42,74,.7);color:var(--text);border-color:rgba(130,165,235,.4)}
+
+.scroll{position:relative;z-index:2;overflow-x:auto;overflow-y:hidden;padding:34px 0 70px}
+.scroll::-webkit-scrollbar{height:9px}
+.scroll::-webkit-scrollbar-thumb{background:rgba(120,150,220,.25);border-radius:5px}
+.scroll::-webkit-scrollbar-track{background:transparent}
+
+/* ─────────────────────────────────────────────
+   ГОРИЗОНТАЛЬНОЕ ДЕРЕВО НА CSS-КОННЕКТОРАХ
+   (схема OSINT Framework: ::before/::after уголки,
+    flex-колонки, без абсолютных SVG, без центрирования)
+   ───────────────────────────────────────────── */
+.tree{position:relative;z-index:2;display:inline-flex;min-width:max-content;padding:0 40px;align-items:center}
+
+/* ul = вертикальная колонка детей одного родителя */
+.tree ul{
+  display:flex;flex-direction:column;justify-content:center;
+  list-style:none;position:relative;
+}
+/* li = один узел (своя строка) */
+.tree li{
+  display:flex;align-items:center;position:relative;
+  padding:7px 0 7px 38px;   /* левый отступ = место под коннектор */
+}
+
+/* горизонтальная «веточка» от вертикали к узлу */
+.tree li::before{
+  content:'';position:absolute;left:0;top:50%;width:38px;height:1.5px;
+  background:var(--bl,var(--line));transform-origin:left;
+  transform:scaleX(0);transition:transform .3s cubic-bezier(.22,.61,.36,1)}
+/* вертикальная линия, соединяющая детей одного родителя */
+.tree li::after{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:1.5px;
+  background:var(--bl,var(--line));
+  transform:scaleY(0);transform-origin:top;transition:transform .3s ease}
+/* первый ребёнок: вертикаль только от центра вниз */
+.tree li:first-child::after{top:50%;bottom:0}
+/* последний ребёнок: вертикаль только сверху до центра */
+.tree li:last-child::after{top:0;bottom:50%}
+/* единственный ребёнок: вертикаль не нужна */
+.tree li:only-child::after{display:none}
+
+/* когда ветка раскрыта — линии «прорастают» */
+.tree ul.show>li::before{transform:scaleX(1)}
+.tree ul.show>li::after{transform:scaleY(1)}
+
+/* корень не имеет входящих линий */
+.tree>ul{padding:0}
+.tree>ul>li{padding-left:0}
+.tree>ul>li::before,.tree>ul>li::after{display:none}
+
+/* контейнер «узел + его дети» */
+.cell{display:flex;align-items:center}
+
+/* анимация раскрытия колонки детей */
+.kids{display:grid;grid-template-columns:0fr;transition:grid-template-columns .34s cubic-bezier(.22,.61,.36,1),opacity .26s;opacity:0}
+.kids>.kidinner{overflow:hidden;min-width:0}
+.kids.show{grid-template-columns:1fr;opacity:1}
+
+/* ── ПИЛЮЛЯ УЗЛА ── */
+.pill{display:inline-flex;align-items:center;gap:9px;padding:9px 15px;border-radius:11px;cursor:pointer;
+  background:var(--node);border:1px solid color-mix(in srgb,var(--cc) 34%,transparent);
+  color:var(--text);font-size:14px;font-weight:500;white-space:nowrap;transition:.18s;position:relative}
+.pill:hover{background:var(--node-hover);border-color:var(--cc);box-shadow:0 0 18px color-mix(in srgb,var(--cc) 22%,transparent)}
+.pill .ico{color:var(--cc);font-size:16px;width:18px;text-align:center}
+.pill .caret{color:var(--text-faint);font-size:11px;transition:transform .3s cubic-bezier(.22,.61,.36,1)}
+.pill.open .caret{transform:rotate(90deg);color:var(--cc)}
+.pill .cnt{font-size:11px;color:var(--text-faint);background:rgba(255,255,255,.05);padding:1px 8px;border-radius:10px;margin-left:2px}
+.pill.root{background:linear-gradient(135deg,#16223f,#101a32);border-color:var(--cc);font-weight:600;font-size:15px}
+.pill.root .ico{font-size:18px}
+.pill.badge-learn::after{content:'от создателей';font-size:10px;color:var(--c-learn);
+  background:color-mix(in srgb,var(--c-learn) 16%,transparent);padding:2px 8px;border-radius:10px;margin-left:2px}
+
+/* лист-ссылка */
+.leaf{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;
+  color:var(--leaf);text-decoration:none;font-size:13.5px;white-space:nowrap;transition:.15s;
+  background:color-mix(in srgb,var(--cc) 7%,transparent);border:1px solid color-mix(in srgb,var(--cc) 16%,transparent)}
+.leaf:hover{background:color-mix(in srgb,var(--cc) 16%,transparent);color:#fff;
+  border-color:color-mix(in srgb,var(--cc) 40%,transparent)}
+.leaf .dot{width:5px;height:5px;border-radius:50%;background:var(--cc);flex-shrink:0;box-shadow:0 0 6px var(--cc)}
+.leaf .ext{font-size:11px;opacity:0;transition:.15s;margin-left:2px}
+.leaf:hover .ext{opacity:.8}
+
+footer{position:relative;z-index:3;text-align:center;margin-top:10px;padding:0 20px 40px;color:var(--text-faint);font-size:12.5px;line-height:1.7}
+footer b{color:var(--text-dim)}
+.empty{display:none;position:relative;z-index:3;text-align:center;padding:30px;color:var(--text-faint)}
+@media (max-width:560px){h1{font-size:26px}header{padding:28px 16px 4px}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="nebula"></div>
+
+<header>
+  <div class="logo"><span class="logo-dot"></span><span class="logo-name">AI Catalog</span></div>
+  <h1>Карта инструментов ИИ</h1>
+  <p class="sub">Сервисы, модели, инструменты и навыки со всего интернета — в одном дереве. Кликай по ветви, чтобы раскрыть.</p>
+</header>
+<div class="toolbar">
+  <div class="search"><span>⌕</span><input type="text" id="q" placeholder="Поиск: claude, veo, n8n…" oninput="filterTree(this.value)"></div>
+  <button class="btn" onclick="expandAll()">Развернуть всё</button>
+  <button class="btn" onclick="collapseAll()">Свернуть</button>
+</div>
+
+<div class="scroll"><div class="tree" id="tree"></div></div>
+<div class="empty" id="empty">Ничего не нашлось.</div>
+
+<footer>Ветка <b>«Обучение»</b> — бесплатные курсы напрямую от создателей моделей.</footer>
+
+<script>
+const DATA=[
+  {id:'llm',name:'Текст и LLM',icon:'✦',color:'var(--c-llm)',groups:[
+    {name:'Чат-ассистенты',items:[['ChatGPT','https://chatgpt.com'],['Claude','https://claude.ai'],['Gemini','https://gemini.google.com'],['Grok','https://grok.com'],['DeepSeek','https://chat.deepseek.com'],['Perplexity','https://perplexity.ai']]},
+    {name:'Open-source модели',items:[['Llama','https://llama.com'],['Mistral','https://mistral.ai'],['Qwen','https://qwen.ai']]},
+    {name:'Написание и перевод',items:[['Jasper','https://jasper.ai'],['Copy.ai','https://copy.ai'],['DeepL','https://deepl.com']]},
+  ]},
+  {id:'img',name:'Изображения',icon:'❖',color:'var(--c-img)',groups:[
+    {name:'Генерация',items:[['Midjourney','https://midjourney.com'],['Nano Banana 2','https://gemini.google.com'],['Flux 2','https://bfl.ai'],['Ideogram 3','https://ideogram.ai'],['Adobe Firefly','https://firefly.adobe.com'],['Leonardo','https://leonardo.ai']]},
+    {name:'Редактирование',items:[['Recraft','https://recraft.ai'],['Magnific','https://magnific.ai'],['Remove.bg','https://remove.bg']]},
+  ]},
+  {id:'audio',name:'Аудио и голос',icon:'♪',color:'var(--c-audio)',groups:[
+    {name:'Синтез речи (TTS)',items:[['ElevenLabs','https://elevenlabs.io'],['Cartesia','https://cartesia.ai'],['PlayHT','https://play.ht']]},
+    {name:'Распознавание (STT)',items:[['Whisper','https://openai.com/research/whisper'],['Deepgram','https://deepgram.com']]},
+    {name:'Музыка',items:[['Suno','https://suno.com'],['Udio','https://udio.com']]},
+    {name:'Голосовые агенты',items:[['Vapi','https://vapi.ai'],['Retell AI','https://retellai.com']]},
+  ]},
+  {id:'video',name:'Видео',icon:'▷',color:'var(--c-video)',groups:[
+    {name:'Генерация',items:[['Google Veo 3.1','https://deepmind.google/technologies/veo'],['Runway Gen-4.5','https://runwayml.com'],['Kling 3.0','https://klingai.com'],['Pika','https://pika.art'],['Luma','https://lumalabs.ai'],['PixVerse','https://pixverse.ai']]},
+    {name:'Аватары и липсинк',items:[['HeyGen','https://heygen.com'],['Synthesia','https://synthesia.io']]},
+    {name:'Сборка и монтаж',items:[['InVideo','https://invideo.io'],['CapCut','https://capcut.com']]},
+  ]},
+  {id:'code',name:'Код и разработка',icon:'⟨⟩',color:'var(--c-code)',groups:[
+    {name:'IDE-ассистенты',items:[['Cursor','https://cursor.com'],['GitHub Copilot','https://github.com/features/copilot'],['Windsurf','https://windsurf.com']]},
+    {name:'Агентные',items:[['Claude Code','https://claude.com/claude-code'],['OpenAI Codex','https://openai.com/codex'],['Cline','https://cline.bot']]},
+    {name:'Энтерпрайз',items:[['Sourcegraph Cody','https://sourcegraph.com'],['Tabnine','https://tabnine.com'],['Amazon Q','https://aws.amazon.com/q']]},
+    {name:'No-code',items:[['Lovable','https://lovable.dev'],['Replit','https://replit.com']]},
+  ]},
+  {id:'agent',name:'Агенты и автоматизация',icon:'⚙',color:'var(--c-agent)',groups:[
+    {name:'Автоматизация',items:[['n8n','https://n8n.io'],['Make','https://make.com'],['Zapier','https://zapier.com']]},
+    {name:'Фреймворки',items:[['LangChain','https://langchain.com'],['LlamaIndex','https://llamaindex.ai']]},
+    {name:'Протоколы',items:[['MCP','https://modelcontextprotocol.io']]},
+  ]},
+  {id:'data',name:'Данные и поиск',icon:'◈',color:'var(--c-data)',groups:[
+    {name:'AI-поиск',items:[['Perplexity','https://perplexity.ai']]},
+    {name:'Векторные базы',items:[['Pinecone','https://pinecone.io'],['Weaviate','https://weaviate.io'],['Qdrant','https://qdrant.tech'],['Supabase','https://supabase.com']]},
+    {name:'RAG и графы',items:[['InfraNodus','https://infranodus.com']]},
+  ]},
+  {id:'api',name:'API и инфраструктура',icon:'⬡',color:'var(--c-api)',groups:[
+    {name:'Хостинг моделей',items:[['Hugging Face','https://huggingface.co'],['Replicate','https://replicate.com']]},
+    {name:'Inference',items:[['Together AI','https://together.ai'],['Groq','https://groq.com'],['fal','https://fal.ai'],['OpenRouter','https://openrouter.ai']]},
+  ]},
+  {id:'learn',name:'Бесплатное обучение',icon:'✸',color:'var(--c-learn)',badge:true,groups:[
+    {name:'От создателей моделей',items:[['Anthropic Academy','https://anthropic.com/learn'],['OpenAI Academy','https://academy.openai.com'],['Google AI / ML Course','https://developers.google.com/machine-learning/crash-course']]},
+    {name:'Курсы и платформы',items:[['DeepLearning.AI','https://deeplearning.ai'],['Hugging Face Courses','https://huggingface.co/learn'],['Microsoft AI Learning','https://learn.microsoft.com/ai'],['Elements of AI','https://elementsofai.com']]},
+    {name:'Документация',items:[['MCP docs','https://modelcontextprotocol.io'],['Prompt Engineering','https://docs.anthropic.com']]},
+  ]},
+];
+
+const tree=document.getElementById('tree');
+
+function leafLi(name,url,color){
+  const li=document.createElement('li');
+  li.style.setProperty('--bl',`color-mix(in srgb,${color} 45%,transparent)`);
+  const a=document.createElement('a');
+  a.className='leaf';a.href=url;a.target='_blank';a.rel='noopener';
+  a.style.setProperty('--cc',color);
+  a.innerHTML=`<span class="dot"></span>${name}<span class="ext">↗</span>`;
+  li.appendChild(a);
+  return li;
+}
+
+// узел = li > .cell(pill + .kids(ul)) ; ul строится из children-li
+function nodeLi(label,color,childLis,{root=false,badge=false,count=null,icon=null}={}){
+  const li=document.createElement('li');
+  li.style.setProperty('--bl',`color-mix(in srgb,${color} 45%,transparent)`);
+  li.style.setProperty('--cc',color);
+
+  const cell=document.createElement('div');cell.className='cell';
+  const pill=document.createElement('div');
+  pill.className='pill'+(root?' root':'')+(badge?' badge-learn':'');
+  pill.innerHTML=`${childLis.length?'<span class="caret">▶</span>':''}${icon?`<span class="ico">${icon}</span>`:''}<span class="lbl">${label}</span>${count!=null?`<span class="cnt">${count}</span>`:''}`;
+  cell.appendChild(pill);
+
+  if(childLis.length){
+    const kids=document.createElement('div');kids.className='kids';
+    const inner=document.createElement('div');inner.className='kidinner';
+    const ul=document.createElement('ul');
+    childLis.forEach(c=>ul.appendChild(c));
+    inner.appendChild(ul);kids.appendChild(inner);
+    cell.appendChild(kids);
+    pill.__ul=ul;pill.__kids=kids;
+    pill.onclick=()=>toggle(pill);
+  }
+  li.appendChild(cell);
+  return li;
+}
+
+function toggle(pill){
+  const opening=!pill.__kids.classList.contains('show');
+  pill.classList.toggle('open',opening);
+  pill.__kids.classList.toggle('show',opening);
+  pill.__ul.classList.toggle('show',opening);
+}
+
+// сборка
+const cats=DATA.map(cat=>{
+  const groups=cat.groups.map(g=>
+    nodeLi(g.name,cat.color,g.items.map(it=>leafLi(it[0],it[1],cat.color)),{count:g.items.length})
+  );
+  return nodeLi(cat.name,cat.color,groups,{icon:cat.icon,badge:cat.badge,count:cat.groups.length});
+});
+const rootLi=nodeLi('AI Catalog','var(--c-llm)',cats,{root:true,icon:'✦'});
+const rootUl=document.createElement('ul');rootUl.appendChild(rootLi);
+tree.appendChild(rootUl);
+
+// раскрыть корень
+const rootPill=tree.querySelector('.pill.root');
+setTimeout(()=>toggle(rootPill),200);
+
+function expandAll(){tree.querySelectorAll('.pill').forEach(p=>{if(p.__kids&&!p.__kids.classList.contains('show'))toggle(p)});}
+function collapseAll(){tree.querySelectorAll('.pill:not(.root)').forEach(p=>{if(p.__kids&&p.__kids.classList.contains('show'))toggle(p)});}
+
+function filterTree(q){
+  q=q.trim().toLowerCase();
+  const leaves=tree.querySelectorAll('.leaf');
+  if(!q){
+    leaves.forEach(l=>l.closest('li').style.display='');
+    tree.querySelectorAll('li').forEach(n=>n.style.display='');
+    collapseAll();document.getElementById('empty').style.display='none';return;
+  }
+  expandAll();
+  setTimeout(()=>{
+    let any=false;
+    leaves.forEach(l=>{const hit=l.textContent.toLowerCase().includes(q);l.closest('li').style.display=hit?'':'none';if(hit)any=true;});
+    tree.querySelectorAll('li').forEach(li=>{
+      if(li.querySelector(':scope>.cell>.leaf'))return;
+      const isRoot=li.querySelector(':scope>.cell>.pill.root');
+      const vis=[...li.querySelectorAll('.leaf')].some(l=>l.closest('li').style.display!=='none');
+      li.style.display=(vis||isRoot)?'':'none';
+    });
+    document.getElementById('empty').style.display=any?'none':'block';
+  },380);
+}
+
+// звёздный фон
+const cv=document.getElementById('stars'),cx=cv.getContext('2d');
+let stars=[],W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;stars=[];
+  const n=Math.min(220,Math.floor(W*H/9000));
+  for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.3,a:Math.random()*.5+.2,tw:Math.random()*6.28,sp:Math.random()*.018+.004});}
+resize();addEventListener('resize',resize);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function draw(t){cx.clearRect(0,0,W,H);
+  for(const s of stars){const tw=reduce?s.a:s.a*(.55+.45*Math.sin(t*s.sp+s.tw));
+    cx.beginPath();cx.arc(s.x,s.y,s.r,0,7);cx.fillStyle=`rgba(190,215,255,${tw})`;cx.fill();}
+  requestAnimationFrame(draw);}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
