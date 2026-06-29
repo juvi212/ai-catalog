@@ -79,13 +79,6 @@ Save the file — the tree rebuilds itself.
 
 ---
 
-## 🌐 Hosting on GitHub Pages
-
-1. Name the file `index.html` and upload it to your repository
-2. **Settings → Pages → Source** → `Deploy from a branch` → `main` / `root`
-3. In about a minute the site will be live at `https://YOUR-USERNAME.github.io/ai-catalog/`
-
----
 
 ## 📄 License
 
